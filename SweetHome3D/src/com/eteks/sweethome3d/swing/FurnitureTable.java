@@ -1376,8 +1376,14 @@ public class FurnitureTable extends JTable implements View, Printable {
               @Override
               public Component getTableCellRendererComponent(JTable table,
                   Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Float volume;
+                if (value != null) {
+                  volume = ((HomePieceOfFurniture)value).getVolume();
+                } else {
+                  volume = null;
+                }
                 return super.getTableCellRendererComponent(table,
-                    value != null  ? ((HomePieceOfFurniture)value).getVolume()  : null,
+                    volume,
                     isSelected, hasFocus, row, column);
               }
             };
