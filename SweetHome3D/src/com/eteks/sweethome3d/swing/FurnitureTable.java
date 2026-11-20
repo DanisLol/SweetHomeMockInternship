@@ -731,6 +731,22 @@ public class FurnitureTable extends JTable implements View, Printable {
     // with printable renderers for each column
     DefaultTableColumnModel printableColumnModel = new DefaultTableColumnModel();
     TableColumnModel columnModel = getColumnModel();
+
+    // Include Level only in the printed model, preserving the displayed columns.
+
+    List<TableColumn> printedColumns = new ArrayList<TableColumn>();
+    boolean levelColumnIncluded = false;
+    for (int columnIndex = 0; columnIndex < columnModel.getColumnCount(); columnIndex++) {
+      TableColumn column = columnModel.getColumn(columnIndex);
+      printedColumns.add(column);
+      if (column.getIdentifier() == HomePieceOfFurniture.SortableProperty.LEVEL) {
+        levelColumnIncluded = true;
+      }
+    }
+    if (!levelColumnIncluded && columnModel instanceof FurnitureTableColumnModel) {
+      printedColumns.add(((FurnitureTableColumnModel)columnModel).getAvailableColumn(
+          HomePieceOfFurniture.SortableProperty.LEVEL));
+    }
     final DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
     defaultRenderer.setHorizontalAlignment(DefaultTableCellRenderer.CENTER);
     TableCellRenderer printableHeaderRenderer = new TableCellRenderer() {
@@ -750,8 +766,7 @@ public class FurnitureTable extends JTable implements View, Printable {
           return headerRendererLabel;
         }
       };
-    for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
-      final TableColumn tableColumn = columnModel.getColumn(columnIndex);
+    for (final TableColumn tableColumn : printedColumns) {
       // Create a printable column from existing table column
       TableColumn printableColumn = new TableColumn();
       printableColumn.setIdentifier(tableColumn.getIdentifier());
@@ -793,7 +808,7 @@ public class FurnitureTable extends JTable implements View, Printable {
     if (EventQueue.isDispatchThread()) {
       TableColumnModel oldColumnModel = getColumnModel();
       Color oldGridColor = getGridColor();
-      setColumnModel(printableColumnModel);   
+      setColumnModel(printableColumnModel);
       if (OperatingSystem.isWindows()) {
         // Add 3 pixels to columns to get a correct rendering
         updateTableColumnsWidth(3);
@@ -803,7 +818,7 @@ public class FurnitureTable extends JTable implements View, Printable {
       setGridColor(gridColor);
       Printable printable = getPrintable(PrintMode.FIT_WIDTH, null, null);
       int pageExists = printable.print(g, pageFormat, pageIndex);
-      // Restore column model and grid color to their previous values
+      // Restore the displayed columns and grid before returning the page result.
       setColumnModel(oldColumnModel);
       setGridColor(oldGridColor);
       return pageExists;
@@ -1015,6 +1030,13 @@ public class FurnitureTable extends JTable implements View, Printable {
       addHomeListener(home);
       addLanguageListener(preferences);
       updateModelColumns(home.getFurnitureVisibleProperties());
+    }
+
+    /**
+     * Returns the available column for the given furniture property.
+     */
+    public TableColumn getAvailableColumn(HomePieceOfFurniture.SortableProperty property) {
+      return this.availableColumns.get(property);
     }
 
     /**
